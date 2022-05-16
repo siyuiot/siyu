@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+  namespace: siyu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+      - name: user
+        image: docker.sharkgulf.cn/shark-bs/user:latest
+        imagePullPolicy: IfNotPresent
+        command: [ "/bin/sh","-c","./user -f /etc/config/app.yml --logger.config.path=/etc/config --logger.config.name=app" ]
+        # args:
+        #     - '--logger.formatter.name=classic'
+        ports:
+        - name: http-port
+          containerPort: 8080
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+        resources:
+          requests:
+            cpu: 250m
+            memory: 128Mi
+        volumeMounts:
+        - mountPath: /etc/config
+          name: cm-user
+        # - mountPath: /etc/localtime
+        #   name: cm-localtime
+        #   subPath: localtime
+        - name: applogs
+          mountPath: /app/log
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: user-conf
+          optional: false
+        name: cm-user
+      # - configMap:
+      #     defaultMode: 420
+      #     name: timezone
+      #   name: cm-localtime
+      - hostPath:
+          path: /data/filebeat/applogs
+          type: DirectoryOrCreate
+        name: applogs
+      imagePullSecrets:
+      - name: sharkgulf
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.sharkgulf.cn/app
+                    operator: In
+                    values:
+                      - "true"

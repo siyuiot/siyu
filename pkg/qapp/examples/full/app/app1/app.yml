@@ -1,0 +1,5 @@
+token: eee
+addr: ":8012"
+
+debugserver:
+  enabled: true

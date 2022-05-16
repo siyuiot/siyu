@@ -1,0 +1,29 @@
+UserInfo: &ui
+  uid: 12345 # 用户编号
+  pn: "188****8888" # 用户手机号码
+
+Api:
+  - url: "/app/user/login" # 用户登录
+    request: # header 临时口令，规则 md5('BLUE'+ts+'SHARK')
+      type: 1  # 登录方式: 1短信验证码 2手机密码 3邮箱密码 4三方授权 5小程序快捷登录 7邮箱验证码登录
+      phone_num: "19999999999" # 手机号码
+      phone_area: #手机号地区编码|require|string
+      email: "user@blueshark.cn" # email邮箱地址
+      sms_vc: "123456"  # 短信验证码
+      password: "md5(salt+md5(passwordtext)+'BS')" # 密码
+      channel: "CHL"  # app分发渠道
+      trigger: 1  # 接口触发方式：0用户触发 1程序触发
+      dev_id: "iPhone6,7xxxxxx" # 登录设备编号
+      minapp:
+        appid:
+        code:
+        iv:
+        encryptedData:
+    response:
+      state: "00" # 通用状态码
+      stateInfo: "OK" # 通用状态描述
+      data:
+        token: "usertoken" # 用户口令
+        expires_in: 7200 #口令过期时间，单位秒
+    eg: curl https://siyu.d.blueshark.com/user/login -H 'Authorization: Bearer test211b780f306cbb79c31965e8ef72bf02' -H 'ts:1566489600' -H 'Sgagent: ANDROID|Redmi Note 5|8.1.0|1.0.4|13065ffa4e9063cdeba|com.sharkgulf.blueshark|zh|CN|xiaomi' -d '{"pn":18616854987,"typ":1}'
+    

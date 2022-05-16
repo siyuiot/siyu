@@ -1,0 +1,19 @@
+.vscode
+*.exe
+*.log
+.idea
+.DS_Store
+.history
+# 忽略 https://github.com/codegangsta/gin 生成的文件
+gin-bin
+go.sum
+
+app/**/log
+app/*/log
+app/file/static/
+app/user/user
+
+mock/simudevice/simudevice
+
+pkg/qlog/example/log
+pkg/mod/cache
