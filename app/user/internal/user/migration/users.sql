@@ -4,7 +4,7 @@
 
 CREATE TABLE public.users
 (
-    user_id integer NOT NULL DEFAULT nextval('users_user_id_seq'::regclass),
+    user_id serial not null,
     phone_num character varying(20) COLLATE pg_catalog."default",
     account character varying(20) COLLATE pg_catalog."default",
     email character varying(100) COLLATE pg_catalog."default",

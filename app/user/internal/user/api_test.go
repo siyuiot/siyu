@@ -86,11 +86,11 @@ func TestQueryInfo(t *testing.T) {
 func TestUpserToken(t *testing.T) {
 	now := time.Now()
 	ok := initInstance().UpsertLoginToken(LoginToken{
-		Uid:    180,
-		Token:  "aa",
-		Ts:     now.Unix(),
-		Des:    "a",
-		Expire: now.Add(time.Hour * 24).Unix(),
+		Uid:     180,
+		Token:   "aa",
+		Ts:      now.Unix(),
+		Des:     "a",
+		Expires: now.Add(time.Hour * 24).Unix(),
 	})
 	if ok {
 		fmt.Println("ok")

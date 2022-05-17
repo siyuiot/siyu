@@ -53,6 +53,7 @@ func (o object) Insert(u *UserInfo) (r int) {
 		o.Log.Errorf("param=%+v,sql=%s,err=%v", u, sqlstr, err)
 		return
 	}
+	u.UserId = r
 	return
 }
 
@@ -322,7 +323,7 @@ func (o *Option) UpsertLoginToken(info LoginToken) (ok bool) {
 	_, err := o.Db.Exec(`INSERT INTO user_login_token(uid, ts, token, expire, des)
 	VALUES ($1, $2, $3, $4, $5)
 	ON CONFLICT (uid)
-	DO UPDATE SET ts=$2, token=$3, expire=$4, des=$5;`, info.Uid, info.Ts, info.Token, info.Expire, info.Des)
+	DO UPDATE SET ts=$2, token=$3, expire=$4, des=$5;`, info.Uid, info.Ts, info.Token, info.Expires, info.Des)
 	if err != nil {
 		o.Log.Errorf("upsert login_token err(%v) ", err)
 		return false

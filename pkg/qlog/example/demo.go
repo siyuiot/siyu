@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	log "gogs.sharkgulf.cn/sg/bs/pkg/qlog"
+	log "github.com/siyuiot/siyu/pkg/qlog"
 )
 
 func main() {
@@ -18,10 +18,7 @@ func main() {
 	//log.Fatal("This is a FATAL message")
 	//log.Panic("This is a PANIC message")
 	log.WithField("foo", "bar").Warn("This is a WithField WARN message")
-	log.WithFields(logrus.Fields{
-		"hello":  "world",
-		"goobye": "moon",
-	}).Info("This is a WithFields INFO message")
+	log.WithField("hello", "world").WithField("goobye", "moon").Info("This is a WithFields INFO message")
 	log.WithError(errors.New("An error")).Warn("with error warning")
 
 	entry := log.WithField("test", "1")

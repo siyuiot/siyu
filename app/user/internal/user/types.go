@@ -51,22 +51,22 @@ import "time"
 // }
 
 type UserInfo struct {
-	UserId       int       `json:"user_id"`
-	PhoneNum     string    `json:"phone_num"`
-	PhoneArea    string    `json:"phone_area"`
+	UserId       int       `json:"uid"`
+	PhoneNum     string    `json:"phoneNum"`
+	PhoneArea    string    `json:"phoneArea"`
 	Account      string    `json:"account"`
 	Email        string    `json:"email"`
 	Password     string    `json:"-"`
 	PwdSalt      string    `json:"-"`
-	NickName     string    `json:"nick_name"`
-	RealName     string    `json:"real_name"`
+	NickName     string    `json:"nickName"`
+	RealName     string    `json:"realName"`
 	Gender       int16     `json:"gender"`
 	Birthday     string    `json:"birthday"`
-	IdNo         string    `json:"id_no"`
+	IdNo         string    `json:"idNo"`
 	Icon         string    `json:"icon"`
 	Location     string    `json:"location"`
-	Reg_Time     string    `json:"red_time"`
-	PerSign      string    `json:"per_sign"`
+	Reg_Time     string    `json:"regTime"`
+	PerSign      string    `json:"perSign"`
 	Completion   int       `json:"completion"`
 	Home         string    `json:"-"`
 	RegType      int16     `json:"-"`
@@ -78,9 +78,9 @@ type UserInfo struct {
 }
 
 type LoginToken struct {
-	Uid    int
-	Token  string
-	Ts     int64
-	Des    string
-	Expire int64
+	Uid     int
+	Token   string
+	Ts      int64
+	Des     string
+	Expires int64
 }

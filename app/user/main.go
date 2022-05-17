@@ -6,6 +6,7 @@ import (
 
 	"github.com/siyuiot/siyu/app/user/internal/app"
 	"github.com/siyuiot/siyu/app/user/internal/httpserver"
+	"github.com/siyuiot/siyu/app/user/internal/user"
 	"github.com/siyuiot/siyu/pkg/qapp"
 	"github.com/siyuiot/siyu/pkg/qgin"
 	"github.com/siyuiot/siyu/pkg/qpostgresql"
@@ -36,9 +37,10 @@ func initPgDb(ctx context.Context) (qapp.CleanFunc, error) {
 
 func runServer(ctx context.Context) error {
 	httpserver.New(httpserver.Option{
-		Ctx:  ctx,
-		Log:  app.Log,
-		Addr: viper.GetString("app.addr"),
+		Ctx:       ctx,
+		Log:       app.Log,
+		Addr:      viper.GetString("app.addr"),
+		UserEntry: user.New(user.Option{Log: app.Log, Db: USERDB}),
 	})
 	return nil
 }

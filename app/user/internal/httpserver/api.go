@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/siyuiot/siyu/app/user/internal/app"
+	"github.com/siyuiot/siyu/app/user/internal/user"
 	"github.com/siyuiot/siyu/pkg/qgin"
 	"github.com/siyuiot/siyu/pkg/qlog"
 	"github.com/spf13/viper"
@@ -15,8 +16,8 @@ func (t *HttpServer) setupRouter() {
 	t.gin.GET("/ping", t.Pong)
 
 	group := t.gin.Group("/user")
-	group.POST("/login", t.UserInfo)
-	group.POST("/query/info", t.UserInfo)
+	group.POST("/login/minapp", t.LoginMinapp)
+	group.POST("/query/info", t.LoginMinapp)
 }
 
 func (*HttpServer) Pong(c *gin.Context) {
@@ -29,9 +30,10 @@ type HttpServer struct {
 }
 
 type Option struct {
-	Ctx  context.Context
-	Log  *qlog.Entry
-	Addr string
+	Ctx       context.Context
+	Log       *qlog.Entry
+	Addr      string
+	UserEntry user.Object
 }
 
 func New(o Option) error {

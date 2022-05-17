@@ -57,7 +57,7 @@ for env in ${envs//,/ };do
         docker push $dockerhub/shark-bs/$app:$time
         # docker tag $dockerhub/shark-bs/$app:$time $dockerhub/shark-bs/$app:latest
         # docker push $dockerhub/shark-bs/$app:latest
-        kubectl --context=$env cluster-info
+        kubectl --context=$env version
         for resource in configmap service ingress deployment hap;do
             if [ $resource = deployment ];then
             sed "s/$app:latest/$app:$time/g" $project/$env/$resource/$app.yml | kubectl --context=$env apply -f -
