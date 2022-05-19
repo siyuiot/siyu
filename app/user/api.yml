@@ -25,9 +25,8 @@ Api:
       -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
       -d '{
         "minapp": {
-          "tokenMp": "abc123",
           "appId": "wxb71c87a341a6eda7",
-          "code": "abc123",
+          "code": "acaefbf460869bb8c884899382087ff015c117781f7a1628f572a00a6cd28195",
           "iv": "abc123",
           "encryptedData": "abc123"
         }

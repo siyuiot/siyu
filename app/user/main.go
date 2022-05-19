@@ -7,6 +7,7 @@ import (
 	"github.com/siyuiot/siyu/app/user/internal/app"
 	"github.com/siyuiot/siyu/app/user/internal/httpserver"
 	"github.com/siyuiot/siyu/app/user/internal/user"
+	"github.com/siyuiot/siyu/app/user/internal/wechatAccessToken"
 	"github.com/siyuiot/siyu/pkg/qapp"
 	"github.com/siyuiot/siyu/pkg/qgin"
 	"github.com/siyuiot/siyu/pkg/qpostgresql"
@@ -35,6 +36,11 @@ func initPgDb(ctx context.Context) (qapp.CleanFunc, error) {
 	return nil, nil
 }
 
+func initModules(ctx context.Context) (qapp.CleanFunc, error) {
+	wechatAccessToken.New(wechatAccessToken.Option{Log: app.Log, Db: USERDB, DbRo: USERDB})
+	return func(ctx context.Context) {}, nil
+}
+
 func runServer(ctx context.Context) error {
 	httpserver.New(httpserver.Option{
 		Ctx:       ctx,
@@ -48,6 +54,7 @@ func runServer(ctx context.Context) error {
 func main() {
 	qapp.New(app.Name, qapp.WithPreload(preload)).
 		AddInitStage("database", initPgDb).
+		AddInitStage("modules", initModules).
 		AddDaemons(runServer).
 		Run()
 }
