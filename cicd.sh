@@ -54,10 +54,9 @@ for env in ${envs//,/ };do
         go env -w GOSUMDB=off
         # git config --global url."https://wizard:xxx@gogs.sharkgulf.cn".insteadof "https://gogs.sharkgulf.cn" #go get私有仓库认证问题
         echo $app && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./app/$buildApp/$buildApp ./app/$buildApp
+        # ./app/$buildApp/$buildApp -f ./app/$buildApp/app.yml --logger.config.path=./app/$buildApp --logger.config.name=app
         docker build -t $dockerhub/shark-bs/$app:$time ./app/$buildApp
         docker push $dockerhub/shark-bs/$app:$time
-        # docker tag $dockerhub/shark-bs/$app:$time $dockerhub/shark-bs/$app:latest
-        # docker push $dockerhub/shark-bs/$app:latest
         for resource in configmap service ingress deployment hap;do
             if [ $resource = deployment ];then
             sed "s/$app:latest/$app:$time/g" $project/$env/$resource/$app.yml | kubectl --context=$env apply -f -

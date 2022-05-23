@@ -1,8 +1,8 @@
--- Table: public.users
+-- Table: public.user
 
--- DROP TABLE public.users;
+-- DROP TABLE public.user;
 
-CREATE TABLE public.users
+CREATE TABLE public.user
 (
     user_id serial not null,
     phone_num character varying(20) COLLATE pg_catalog."default",
@@ -28,20 +28,11 @@ CREATE TABLE public.users
     app character varying(20) COLLATE pg_catalog."default" NOT NULL DEFAULT ''::character varying,
     phone_area character varying(10) COLLATE pg_catalog."default",
     general_setup jsonb NOT NULL DEFAULT '{}'::jsonb,
-    CONSTRAINT pk_users PRIMARY KEY (user_id)
+    CONSTRAINT pk_user PRIMARY KEY (user_id)
 )
 WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
 
-ALTER TABLE public.users
-    OWNER to postgres;
--- Index: users_union_pk
-
--- DROP INDEX public.users_union_pk;
-
-CREATE UNIQUE INDEX users_union_pk
-    ON public.users USING btree
-    (phone_num COLLATE pg_catalog."default" ASC NULLS LAST, phone_area COLLATE pg_catalog."default" ASC NULLS LAST, app COLLATE pg_catalog."default" ASC NULLS LAST, email COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
+ALTER TABLE public.user OWNER to postgres;

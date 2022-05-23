@@ -18,16 +18,84 @@ Api:
         token: abc123 # 用户口令
         expires: 7200 # 口令过期时间，单位秒
         user: *ui
-    eg:
-      curl https://siyu.d.blueshark.com/user/login/minapp \
-      -H 'Authorization: Bearer test211b780f306cbb79c31965e8ef72bf02' \
-      -H 'Ts:1566489600' \
-      -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
-      -d '{
-        "minapp": {
-          "appId": "wxb71c87a341a6eda7",
-          "code": "acaefbf460869bb8c884899382087ff015c117781f7a1628f572a00a6cd28195",
-          "iv": "abc123",
-          "encryptedData": "abc123"
-        }
-      }'
+    # eg:
+    #   curl https://siyu.d.blueshark.com/user/login/minapp \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -d '{
+    #     "minapp": {
+    #       "appId": "wxb71c87a341a6eda7",
+    #       "code": "acaefbf460869bb8c884899382087ff015c117781f7a1628f572a00a6cd28195",
+    #       "iv": "abc123",
+    #       "encryptedData": "abc123"
+    #     }
+    #   }'
+  - url: "/product/get/list" # 商品列表
+    request:
+      pid: 1
+    response:
+      state: 0 # 状态码
+      stateInfo: OK # 状态描述
+      data:
+        - pid: 1
+          name: "流量，包月"
+          price: 100 # 单位 分
+          des: "" # 商品描述
+    # eg:
+    #   curl https://siyu.d.blueshark.com/product/get/list \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -d '{"pid": 1}'
+  - url: "/userSim/bind" # 绑定sim卡
+    request:
+      iccid: "18616854987"
+      pku: "123456"
+    response:
+      state: 0 # 状态码
+      stateInfo: OK # 状态描述
+    # eg:
+    #   curl http://siyu.d.blueshark.com/userSim/bind \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -d '{
+    #     "iccid": "18616854987",
+    #     "pku": "123456"
+    #   }'
+  - url: "/userSim/get/list" # 用户sim列表
+    request:
+      
+    response:
+      state: 0 # 状态码
+      stateInfo: OK # 状态描述
+      data:
+        - sid: 1 # sim卡id
+          simNo: "186111111111" # sim卡号
+    # eg:
+    #   curl http://siyu.d.blueshark.com/userSim/get/list \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -d '{}'
+  - url: "/userSim/get/info" # 用户sim信息
+    request:
+      sid: 1
+    response:
+      state: 0 # 状态码
+      stateInfo: OK # 状态描述
+      data:
+        sid: 1 # sim卡id
+        simNo: "186111111111" # sim卡号
+        bindTs: 1653323424 # 用户绑定卡时间戳=用户使用开始时间戳
+        serviceDuration: # 用户购买套餐时长 单位：月 1=1个月 12=1年
+        serviceEndTs: 1654187424 # 服务结束时间戳=用户使用截止时间戳
+        simByte: 307200 # sim卡流量=用户购买流量
+        simAvailableByte: 307200 # sim卡可用流量=用户剩余流量
+    # eg:
+    #   curl http://siyu.d.blueshark.com/userSim/get/info \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -d '{"sid":1}'

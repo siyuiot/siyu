@@ -11,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var this *object
+
 type Object interface {
 	Insert(info *UserInfo) int
 	Update(info *UserInfo) int
@@ -22,24 +24,28 @@ type Object interface {
 	QueryInfoByPn(pn, pnArea, app string) *UserInfo
 	QueryInfoByEmail(email, app string) *UserInfo
 	Delete(uid int) (r int)
-	UpsertLoginToken(info LoginToken) (ok bool)
 }
 
 type Option struct {
-	Log *logrus.Entry
-	Db  *sql.DB
+	Log  *logrus.Entry
+	Db   *sql.DB
+	DbRo *sql.DB
 }
 
 type object struct {
 	Option
 }
 
-func New(o Option) Object {
-	return &object{Option: o}
+func New(o Option) {
+	this = &object{Option: o}
+}
+
+func Instance() *object {
+	return this
 }
 
 func (o object) Insert(u *UserInfo) (r int) {
-	sqlstr := `insert into users(created_time,updated_time,phone_num,email,phone_area,app,nick_name,pwd_salt,reg_type,password)
+	sqlstr := `insert into public.user(created_time,updated_time,phone_num,email,phone_area,app,nick_name,pwd_salt,reg_type,password)
 	values('%s','%s',%s,'%s','%s','%s','%s','%s','%d','%s')
 	returning user_id`
 	if len(u.PhoneNum) <= 0 { //数据库phone_num有唯一约束，插入NULL
@@ -58,7 +64,7 @@ func (o object) Insert(u *UserInfo) (r int) {
 }
 
 func (o object) Update(u *UserInfo) (r int) {
-	sqlstr := fmt.Sprintf("update users set updated_time = '%s',", time.Now().Format(time.RFC3339))
+	sqlstr := fmt.Sprintf(`update public.user set updated_time = '%s',`, time.Now().Format(time.RFC3339))
 	if u.UserId <= 0 {
 		o.Log.Error("invalid param")
 		return
@@ -117,7 +123,7 @@ func (o object) Update(u *UserInfo) (r int) {
 
 func (o object) UpdatePnIsNull(uid int) (r int) {
 	sqlstr := `
-	update users set 
+	update public.user set 
 	phone_num = null
 	where user_id = $1
 	returning user_id
@@ -132,7 +138,7 @@ func (o object) UpdatePnIsNull(uid int) (r int) {
 
 func (o object) UpdateEmailIsNull(uid int) (r int) {
 	sqlstr := `
-	update users set 
+	update public.user set 
 	email = null
 	where user_id = $1
 	returning user_id
@@ -147,7 +153,7 @@ func (o object) UpdateEmailIsNull(uid int) (r int) {
 
 func (o object) UpdatePasswd(uid int, pw string) (r int) {
 	sqlstr := `
-	update users
+	update public.user
 	set password = $2
 	where user_id = $1
 	returning user_id
@@ -212,7 +218,7 @@ func (o object) queryInfo(uid int, pn, pnArea, app, email string) *UserInfo {
 	u.tz,
 	u.pwd_salt,
 	coalesce(u.phone_area,'')
-  	from users u
+  	from public.user u
  	where 1=1
 	`
 	sqlstr += qstr
@@ -241,7 +247,7 @@ func (o object) queryList(where string, page, size int) (list []UserInfo, total 
 	if page <= 0 {
 		size = 20
 	}
-	sqlCount := `select count(user_id) from users where 1=1` + where
+	sqlCount := `select count(user_id) from public.user where 1=1` + where
 	err := o.Db.QueryRow(sqlCount).Scan(&total)
 	if err != nil {
 		o.Log.Errorf("sqlCount=%s,error=%v", sqlCount, err)
@@ -271,7 +277,7 @@ func (o object) queryList(where string, page, size int) (list []UserInfo, total 
 	coalesce(phone_area,''),
 	coalesce(app,''),
 	coalesce(general_setup,'{}'::jsonb)
-	from users  where 1=1`
+	from public.user  where 1=1`
 	where = sqlstr + where + fmt.Sprintf(" limit %d offset %d", size, (page-1)*size)
 	rows, err := o.Db.Query(where)
 	if err != nil {
@@ -306,7 +312,7 @@ func (o object) Delete(uid int) (r int) {
 	delete from user_third_map where user_id = uid;
 	delete from user_bike_map where user_id = uid;
 	update bike set owner_id = null where owner_id = uid;
-	delete from users where user_id = uid;
+	delete from public.user where user_id = uid;
 	end;
 	$$
 	`
@@ -317,16 +323,4 @@ func (o object) Delete(uid int) (r int) {
 		return
 	}
 	return uid
-}
-
-func (o *Option) UpsertLoginToken(info LoginToken) (ok bool) {
-	_, err := o.Db.Exec(`INSERT INTO user_login_token(uid, ts, token, expire, des)
-	VALUES ($1, $2, $3, $4, $5)
-	ON CONFLICT (uid)
-	DO UPDATE SET ts=$2, token=$3, expire=$4, des=$5;`, info.Uid, info.Ts, info.Token, info.Expires, info.Des)
-	if err != nil {
-		o.Log.Errorf("upsert login_token err(%v) ", err)
-		return false
-	}
-	return true
 }

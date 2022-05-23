@@ -11,6 +11,7 @@ import (
 	"github.com/siyuiot/siyu/app/user/internal/minapp"
 	"github.com/siyuiot/siyu/app/user/internal/minappCode2PhoneNum"
 	"github.com/siyuiot/siyu/app/user/internal/user"
+	"github.com/siyuiot/siyu/app/user/internal/userToken"
 	"github.com/siyuiot/siyu/app/user/internal/wechatAccessToken"
 	"github.com/siyuiot/siyu/modules/qstate"
 	"github.com/siyuiot/siyu/pkg/qmd5"
@@ -42,8 +43,7 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		app.Log.Error(err)
-		ret.State, ret.StateInfo = State(qstate.StateInvalidParameter)
-		ret.CustInfo = err.Error()
+		ret.State, ret.StateInfo = qstate.StateInvalidParameter, err.Error()
 		return
 	}
 	// out, err := wechat.New(wechat.ClientOption{
@@ -83,7 +83,7 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 	}
 	app := "com.siyu.iot"
 	now := time.Now().UTC()
-	u := t.UserEntry.QueryInfoByPn(phoneInfo.PhoneNumber, phoneInfo.CountryCode, app)
+	u := user.Instance().QueryInfoByPn(phoneInfo.PhoneNumber, phoneInfo.CountryCode, app)
 	if u == nil {
 		u = &user.UserInfo{
 			PhoneNum:    phoneInfo.PhoneNumber,
@@ -96,14 +96,14 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 			UpdatedTime: now,
 			RegType:     1,
 		}
-		t.UserEntry.Insert(u)
+		user.Instance().Insert(u)
 	}
 	data := Data{
 		Token: qmd5.QMD5String([]byte(fmt.Sprintf("foo%dbar", now.Unix()))),
 		User:  u,
 	}
 	data.Expires = now.Add(7200 * time.Second).Unix()
-	ruid := t.UserEntry.UpsertLoginToken(user.LoginToken{Uid: u.UserId, Ts: now.Unix(), Token: data.Token, Expires: data.Expires})
+	ruid := userToken.Instance().Upsert(&userToken.Info{Uid: u.UserId, Ts: now.Unix(), Token: data.Token, Expires: data.Expires})
 	if ruid == false {
 		ret.State, ret.StateInfo = State(qstate.StateFailed)
 		return

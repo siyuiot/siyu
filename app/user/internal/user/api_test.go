@@ -82,20 +82,3 @@ func TestQueryInfo(t *testing.T) {
 		fmt.Printf("%+v", *info)
 	}
 }
-
-func TestUpserToken(t *testing.T) {
-	now := time.Now()
-	ok := initInstance().UpsertLoginToken(LoginToken{
-		Uid:     180,
-		Token:   "aa",
-		Ts:      now.Unix(),
-		Des:     "a",
-		Expires: now.Add(time.Hour * 24).Unix(),
-	})
-	if ok {
-		fmt.Println("ok")
-	} else {
-		t.Fail()
-		fmt.Println("false")
-	}
-}

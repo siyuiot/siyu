@@ -17,7 +17,18 @@ func (t *HttpServer) setupRouter() {
 
 	group := t.gin.Group("/user")
 	group.POST("/login/minapp", t.LoginMinapp)
-	group.POST("/query/info", t.LoginMinapp)
+	group.POST("/get/info", t.Pong)
+
+	product := t.gin.Group("/product")
+	product.POST("/get/list", t.ProductList)
+	product.POST("/get/info", t.Pong)
+
+	// 用户sim卡
+	service := t.gin.Group("/userSim")
+	service.POST("/bind", t.UserSimBind)     // 绑定sim
+	service.POST("/get/list", t.UserSimList) // 用户sim信息
+	service.POST("/get/info", t.UserSimInfo) // 用户sim信息
+
 }
 
 func (*HttpServer) Pong(c *gin.Context) {
@@ -42,6 +53,7 @@ func New(o Option) error {
 		gin:    gin.New(),
 	}
 	t.gin.Use(qgin.LogReq(app.Log))
+	t.gin.Use(Auth())
 	t.setupRouter()
 	app.Log.Debugf("Listening and serving HTTP on %s\n", o.Addr)
 	return t.gin.Run(o.Addr)

@@ -1,8 +1,6 @@
-package wechatAccessToken
+package product
 
-// https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Get_access_token.html
-
-// 微信accessToken被动刷新
+// 产品：用户服务
 
 import (
 	"database/sql"
@@ -10,11 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/siyuiot/siyu/pkg/qhttp"
 	"github.com/siyuiot/siyu/pkg/qlog"
 )
 
 var this *object
+
+var orderDB *gorm.DB
 
 type Object interface {
 	// Update(*Info) int
@@ -23,9 +24,10 @@ type Object interface {
 }
 
 type Option struct {
-	Log  *qlog.Entry
-	Db   *sql.DB
-	DbRo *sql.DB
+	Log   *qlog.Entry
+	Db    *sql.DB
+	DbRo  *sql.DB
+	DBORM *gorm.DB
 }
 
 type object struct {
@@ -43,7 +45,7 @@ func Instance() *object {
 }
 
 func (o object) update(i *Info) (r string) {
-	now := time.Now()
+	now := time.Now().UTC()
 	sqlstr := fmt.Sprintf("update wechat_access_token set updated = %d,", now.Unix())
 	if len(i.AppId) <= 0 {
 		o.Log.Error("invalid param")
@@ -68,12 +70,12 @@ func (o object) update(i *Info) (r string) {
 	return
 }
 
-func (o object) queryInfo(id string) *Info {
+func (o object) queryInfo(appId string) *Info {
 	r := new(Info)
 	var qstr string
 	switch {
-	case len(id) > 0:
-		qstr += fmt.Sprintf(" and app_id = '%s'", id)
+	case len(appId) > 0:
+		qstr += fmt.Sprintf(" and app_id = '%s'", appId)
 	default:
 		o.Log.Error("invalid param")
 		return nil
@@ -93,7 +95,7 @@ func (o object) queryInfo(id string) *Info {
 	sqlstr += qstr
 	err := o.DbRo.QueryRow(sqlstr).Scan(&r.AppId, &r.Secret, &r.AccessToken, &r.ExpiresIn, &r.ExpiresAt, &r.Created, &r.Updated)
 	if err != nil {
-		o.Log.Errorf("param=%s,sql=%s,err=%v", id, sqlstr, err)
+		o.Log.Errorf("param=%s,sql=%s,err=%v", appId, sqlstr, err)
 		return nil
 	}
 	return r
@@ -104,7 +106,7 @@ func (o object) queryInfoFromDb(appId string) *Info {
 }
 
 func (o object) GetFromDbOrRemote(appId string) *Info {
-	now := time.Now()
+	now := time.Now().UTC()
 	info := o.queryInfoFromDb(appId)
 	if info == nil {
 		o.Log.Error("appId is not config")

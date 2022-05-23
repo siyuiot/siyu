@@ -76,11 +76,3 @@ type UserInfo struct {
 	CreatedTime  time.Time `json:"-"`
 	UpdatedTime  time.Time `json:"-"`
 }
-
-type LoginToken struct {
-	Uid     int
-	Token   string
-	Ts      int64
-	Des     string
-	Expires int64
-}

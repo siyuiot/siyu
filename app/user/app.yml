@@ -1,4 +1,4 @@
-runmode: dev # 运行模式 dev 开发环境 test 测试环境 debug debug环境 prod 正式环境
+runmode: test # 运行模式 dev 开发环境 test 测试环境 debug debug环境 prod 正式环境
 logger:
   level: debug # default log level, used if hooks not specify a log level
   reportcaller: true # show reportcaller, will affect all hooks
@@ -6,80 +6,46 @@ logger:
     name: classic # default formatter name
     opts: # default formatter opts
       forcecolors: true
+      truncateCallerPath: true
+      callerPathStrip: true
   stdout:
     enabled: true
     level: debug
+  udp:
+    enabled: false
+    level: debug
+    service: logservice.siyu:8080
+    formatter:
+      name: classic
+      opts: # default formatter opts
+        truncateCallerPath: true
+        callerPathStrip: true
   file:
     enabled: true
-    path: ./log
+    name: user.log
+    path: /app/log/user
     level: debug
     formatter:
       name: classic
+      opts: # default formatter opts
+        forcecolors: true
+        truncateCallerPath: true
+        callerPathStrip: true
 
-userapi:
+app:
   addr: ":8080"
 pg:
   user:
-    url: "postgres://postgres:iLoveShark@postgresql-postgresql.postgresql/bsmaster?sslmode=disable&fallback_application_name=usersvc"
+    url: "postgres://postgres:iLoveShark@192.168.0.247:32432/master?sslmode=disable&fallback_application_name=user"
     maxopen: 10
     maxidle: 5
-redis:
-  sentinels:
-    - redis-cluster-announce-0.redis-ha:26379
-    - redis-cluster-announce-1.redis-ha:26379
-    - redis-cluster-announce-2.redis-ha:26379
-  addr: "192.168.0.245:30279"
 sms:
   addr: "http://sms.sg-base:8080/sms/send"
-voice:
-  addr: "http://sms.sg-base:8080/voice/send"
-email:
-  addr: "http://sms.sg-base:8080/email/send"
-fileupload:
-  addr: "http://file.sg-base:8080/upload"
-filedownload:
-  addr: "https://storageapi.oss-cn-zhangjiakou.aliyuncs.com"
-memberpoints:
-  addr: "http://memberpoints:8080"
-channels:
-  addr: "http://channels:8080"
-
-servicetelephone:
-  - phone: "021-52216418"  #服务电话
-    name: "客服" #服务名称
-
-serviceagreement: "v1.1" #用户服务协议版本
-useragreement: "v1.0" #隐私权政策版本
-
-minapp:
-  wx18cacb2235c01f99: 7b88ad6ee6b5f1d3a72ddaf359d7ea58 # 未知
-  wxd7244a8a622667c4: 5d06ed3c520ee69b225a67928016c67b # 海洋个人测试用
-  wxe73b9412731694b5: 98aaeaeaa45e20232a72bb9d254701a7 # 蓝鲨购车
-  wx1b7f3eab81a75f67: f2c1e852efb5ea3a818d4b8806ea4964 #  简化版 app
-mq:
-  kafka: kafka-headless.kafka:9092
-encrypt: true #敏感数据加密 GDPR 欧洲服务器数据加密
 state:
-  "00": 成功
-  "01": 无效参数
-  "02": 失败
-  "1100": 输入错误，请重试！ #/user/validatesmsvc短信验证码校验接口
-  "1101": 无效用户
-  "1102": 无效手机号
-  "1103": 输入的手机号码已注册，可直接登录 #/user/registry注册接口
-  "1104": 账号或密码错误
-  "1105": 旧密码输入错误
-  "1106": 账号或密码错误，请2分钟后重试
-  "1107": 验证码已过期，请刷新重试
-  "1108": 三方账号已存在
-  "1109": 该手机号已经绑定其他{{partner}}账号
-  "1110": 三方账号不存在
-  "1111": 输入错误，请2分钟后重试！
-  "1120": 今天已签到"
-  "1121": 该账号已绑定手机号
-  "1122": 输入错误，请重试！ #/user/login登录接口
-  "1123": 输入错误，请重试！ #/user/updatepn修改手机号接口
-  "1124": 输入错误，请重试！ #/user/bindpn绑定手机号接口
-  "1125": 输入的手机号码已注册，可直接登录 #/user/updatepn修改手机号接口
-  "1126": 无效email
-  "1130": 邮箱未注册！ #/user/login 登录接口
+  0: Ok
+  1: InvalidParameter
+  2: Failed
+  3: CrossDomainPrelight
+  4: NoRecord
+  5: Duplicate
+  6: NotAuth
