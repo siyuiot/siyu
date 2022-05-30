@@ -8,8 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/siyuiot/siyu/app/user/internal/app"
-	"github.com/siyuiot/siyu/app/user/internal/minapp"
 	"github.com/siyuiot/siyu/app/user/internal/minappCode2PhoneNum"
+	"github.com/siyuiot/siyu/app/user/internal/minappCode2Session"
+	"github.com/siyuiot/siyu/app/user/internal/minappDataDecrypt"
 	"github.com/siyuiot/siyu/app/user/internal/user"
 	"github.com/siyuiot/siyu/app/user/internal/userToken"
 	"github.com/siyuiot/siyu/app/user/internal/wechatAccessToken"
@@ -23,15 +24,16 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 		Data struct {
 			Token   string         `json:"token"`
 			Expires int64          `json:"expires"`
+			OpenId  string         `json:"openId"`
 			User    *user.UserInfo `json:"user"`
 		}
 		Req struct {
-			Minapp minapp.Minapp `json:"minapp"`
+			Code   string                   `json:"code" binding:"required"`
+			Minapp minappDataDecrypt.Minapp `json:"minapp"`
 		}
 		Ret struct {
 			State     int    `json:"state"`
 			StateInfo string `json:"stateInfo"`
-			CustInfo  string `json:"custInfo,omitempty"` //自定义描述
 			Data      Data   `json:"data"`
 		}
 	)
@@ -46,39 +48,25 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 		ret.State, ret.StateInfo = qstate.StateInvalidParameter, err.Error()
 		return
 	}
-	// out, err := wechat.New(wechat.ClientOption{
-	// 	RequestId: quuid.New(),
-	// }).Code2Session(wechat.InCode2Session{
-	// 	Appid: req.Minapp.AppId,
-	// 	Code:  req.Minapp.Code,
-	// 	Token: req.Minapp.TokenMp,
-	// })
-	// if err != nil {
-	// 	app.Log.Error(err)
-	// 	ret.State, ret.StateInfo = State(qstate.StateFailed)
-	// 	return
-	// }
-	// pn, err := minapp.VerifXcxUserPnInfo(out.SessionKey, req.Minapp.Iv, req.Minapp.EncryptedData, req.Minapp.AppId)
-	// if err != nil {
-	// 	app.Log.Error("invalid parametes", err)
-	// 	ret.State, ret.StateInfo = State(qstate.StateInvalidParameter)
-	// 	return
-	// }
 	wat := wechatAccessToken.Instance().GetFromDbOrRemote(req.Minapp.AppId)
 	if wat == nil {
-		ret.State, ret.StateInfo = State(qstate.StateFailed)
-		ret.CustInfo = fmt.Sprintf("accessToken is nil")
+		ret.State, ret.StateInfo = qstate.StateFailed, "accessToken is nil"
 		return
 	}
-	phoneInfo := minappCode2PhoneNum.POST(wat.AccessToken, req.Minapp.Code)
+	ms := minappCode2Session.GET(wat.AppId, wat.Secret, req.Minapp.Code)
+	if ms == nil {
+		ret.State, ret.StateInfo = qstate.StateFailed, "session nil,may be invalid code"
+		return
+	}
+	data := Data{OpenId: ms.OpenID}
+	// phoneInfo, err := minappDataDecrypt.VerifXcxUserPnInfo(ms.SessionKey, req.Minapp.Iv, req.Minapp.EncryptedData, req.Minapp.AppId)
+	phoneInfo := minappCode2PhoneNum.POST(wat.AccessToken, req.Code)
 	if phoneInfo == nil {
-		ret.State, ret.StateInfo = State(qstate.StateFailed)
-		ret.CustInfo = fmt.Sprintf("phoneInfo is nil,may be invalid code")
+		ret.State, ret.StateInfo = qstate.StateFailed, "phoneInfo is nil,may be invalid code"
 		return
 	}
 	if len(phoneInfo.PhoneNumber) != 11 {
-		ret.State, ret.StateInfo = State(qstate.StateFailed)
-		ret.CustInfo = fmt.Sprintf("phoneNumber:%s", phoneInfo.PhoneNumber)
+		ret.State, ret.StateInfo = qstate.StateFailed, fmt.Sprintf("phoneNumber:%s,may be invalid code", phoneInfo.PhoneNumber)
 		return
 	}
 	app := "com.siyu.iot"
@@ -98,10 +86,8 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 		}
 		user.Instance().Insert(u)
 	}
-	data := Data{
-		Token: qmd5.QMD5String([]byte(fmt.Sprintf("foo%dbar", now.Unix()))),
-		User:  u,
-	}
+	data.Token = qmd5.QMD5String([]byte(fmt.Sprintf("foo%dbar", now.Unix())))
+	data.User = u
 	data.Expires = now.Add(7200 * time.Second).Unix()
 	ruid := userToken.Instance().Upsert(&userToken.Info{Uid: u.UserId, Ts: now.Unix(), Token: data.Token, Expires: data.Expires})
 	if ruid == false {

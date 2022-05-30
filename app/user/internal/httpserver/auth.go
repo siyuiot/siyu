@@ -13,7 +13,10 @@ import (
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var m = map[string]int{"/user/login/minapp": 1}
+		var m = map[string]int{
+			"/user/login/minapp":       1,
+			"/simOrder/payment/notify": 1,
+		}
 		type Ret struct {
 			State     int    `json:"state"`
 			StateInfo string `json:"stateInfo"`

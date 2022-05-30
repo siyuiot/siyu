@@ -1,4 +1,4 @@
-package minapp
+package minappDataDecrypt
 
 import (
 	"crypto/aes"
@@ -136,18 +136,16 @@ func VerifXcxUserInfo(sessionkey, iv, data, appid string) (unionid string, err e
 	return ui.UnionID, nil
 }
 
-func VerifXcxUserPnInfo(sessionkey, iv, data, appid string) (pn string, err error) {
+func VerifXcxUserPnInfo(sessionkey, iv, data, appid string) (info *PhoneNumber, err error) {
 	pc := NewWXBizDataCrypt(appid, sessionkey)
 	b, err := pc.Decrypt(data, iv)
 	if err != nil {
 		app.Log.Error("VerifXcxEncryptedData err = ", err)
-		return "", err
+		return nil, err
 	}
 	type WechatUserPnInfo struct {
-		PhoneNumber     string `json:"phoneNumber"`
-		PurePhoneNumber string `json:"purePhoneNumber"`
-		CountryCode     string `json:"countryCode"`
-		Watermark       struct {
+		PhoneNumber
+		Watermark struct {
 			Timestamp int64  `json:"timestamp"`
 			AppID     string `json:"appid"`
 		} `json:"watermark"`
@@ -155,10 +153,10 @@ func VerifXcxUserPnInfo(sessionkey, iv, data, appid string) (pn string, err erro
 	var ui WechatUserPnInfo
 	err = json.Unmarshal(b, &ui)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if ui.Watermark.AppID != appid {
-		return "", errors.New("app id not match")
+		return nil, errors.New("app id not match")
 	}
-	return ui.PurePhoneNumber, nil
+	return &ui.PhoneNumber, nil
 }

@@ -22,7 +22,7 @@ Api:
     #   curl https://siyu.d.blueshark.com/user/login/minapp \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
-    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{
     #     "minapp": {
     #       "appId": "wxb71c87a341a6eda7",
@@ -31,14 +31,14 @@ Api:
     #       "encryptedData": "abc123"
     #     }
     #   }'
-  - url: "/product/get/list" # 商品列表
+  - url: "/productSku/get/list" # 商品库存列表
     request:
       pid: 1
     response:
       state: 0 # 状态码
       stateInfo: OK # 状态描述
       data:
-        - pid: 1
+        - skuId: 1
           name: "流量，包月"
           price: 100 # 单位 分
           des: "" # 商品描述
@@ -46,7 +46,7 @@ Api:
     #   curl https://siyu.d.blueshark.com/product/get/list \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
-    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{"pid": 1}'
   - url: "/userSim/bind" # 绑定sim卡
     request:
@@ -59,7 +59,7 @@ Api:
     #   curl http://siyu.d.blueshark.com/userSim/bind \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
-    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{
     #     "iccid": "18616854987",
     #     "pku": "123456"
@@ -77,7 +77,7 @@ Api:
     #   curl http://siyu.d.blueshark.com/userSim/get/list \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
-    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{}'
   - url: "/userSim/get/info" # 用户sim信息
     request:
@@ -97,5 +97,22 @@ Api:
     #   curl http://siyu.d.blueshark.com/userSim/get/info \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
-    #   -H 'Sgagent: MP|Redmi Note 5|8.1.0|1.0.4|123|com.siyu.iot|zh|CN|xiaomi' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{"sid":1}'
+  - url: "/simOrder/submit" # sim套餐订单提交
+    request:
+      sid: 1 # sim卡id
+      skuId: 2 # 套餐id
+    response:
+      state: 0 # 状态码
+      stateInfo: OK # 状态描述
+      data:
+        ono: "20220525115600" # 订单编号
+    # eg:
+    #   curl http://siyu.d.blueshark.com/simOrder/submit \
+    #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
+    #   -H 'Ts:1566489600' \
+    #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
+    #   -d '{"sid":1,"skuId":2}'
+
+# 2022/05/28 16:41:13.692080Z I user qgin/log.go:62 url=/simOrder/payment/notify req={"id":"f050a6cb-ae78-515e-88b0-f81b723ecc28","create_time":"2022-05-29T00:41:13+08:00","resource_type":"encrypt-resource","event_type":"TRANSACTION.SUCCESS","summary":"支付成功","resource":{"original_type":"transaction","algorithm":"AEAD_AES_256_GCM","ciphertext":"1yTrMT98a29F4/dnnrr4sflcNXWFeJxtw9yj/yzO/VFYMm3fuNw4sKjSawUMf1AtCGgZYrWpOgf4rA8cyFMB6JEoO+yYtQ6/Fa6198MGCTudvqoAcbiwbISBzT2iAOCCNwILeCuXrXbf4eczqCRxvbmD5D6KMtqjlNz04qEs5IlHz0X5szhDihaGZm06LgXEb7J022Vza7u4XgkVEgDy7lB0a0+5w9zuhhU/ZlGKkLR2thSI8gW/y+spucsHpQbkrnuUf4ERFD/h+pT/lpXIwJh5cbEUKEq9tC/9DtZ3eLg3eWE7tXUph/9UY3B4Kz/A5X7M+Sg/0L6R5xbX0cvSALtUqxBRV/3nytoESAkUCu10XPYvgDNqZwe3ZB9yQrgfOKQalVTjcc1gbAHphODjrM/bgYUmdMYbEFTSadqiJVrYppa4GDwzeAARH5xQ82YZ84SGw76jqnJuADBVt8s4RMLCGhlLBFLHrg1YYE4j2OaBmZxEMfm+IBYJJKS5VEAWl/N9ZPxruA3XGV0jxUaj+rJBPTQhfSiyYBm0ZZodACmFoye+61rDpl1w7/UaTuu30ERTwdkJKR8sDEU+UA==","associated_data":"transaction","nonce":"iTJ6suFD5SLN"}} ip=192.168.0.249 requestId=

@@ -1,6 +1,4 @@
-package userSim
-
-// 用户绑定sim卡
+package simOrder
 
 import (
 	"database/sql"
@@ -8,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siyuiot/siyu/app/user/internal/app"
 	"github.com/siyuiot/siyu/pkg/qlog"
 )
 
@@ -15,9 +14,8 @@ var this *object
 
 type Object interface {
 	Insert(*Info) int
-	Update(*Info) int
-	QueryInfo(uid, sid int) *Info
-	QueryInfoBySid(sid int) *Info
+	Update(i *Info) (r string)
+	QueryInfoByNo(no string) *Info
 	QueryList(uid int) (int, []Info)
 	Delete(uid, sid int) *Info
 }
@@ -46,10 +44,10 @@ func (o object) Insert(i *Info) (r int) {
 	now := time.Now()
 	i.Created = now.Unix()
 	i.Updated = now.Unix()
-	sqlstr := `insert into user_sim(uid,sid,sim_provider,sim_no,iccid,sim_byte,sim_available_byte,bind_ts,service_end_ts,service_duration,remark,created,updated)
-	values(%d,%d,'%s','%s','%s',%d,%d,%d,%d,%d,'%s',%d,%d)
-	returning uid`
-	sqlstr = fmt.Sprintf(sqlstr, i.Uid, i.Sid, i.SimProvider, i.SimNo, i.Iccid, i.SimByte, i.SimAvailableByte, i.BindTs, i.ServiceEndTs, i.ServiceDuration, i.Remark, i.Created, i.Updated)
+	sqlstr := `insert into sim_order(uid,sid,name,no,typ,sku_id,status,amount_price,due_price,pay_channel,remark,created,updated)
+	values(%d,%d,'%s','%s',%d,%d,%d,%d,%d,'%s','%s',%d,%d)
+	returning oid;`
+	sqlstr = fmt.Sprintf(sqlstr, i.Uid, i.Sid, i.Name, i.No, i.Typ, i.SkuId, i.Status, i.AmountPrice, i.DuePrice, i.PayChannel, i.Remark, i.Created, i.Updated)
 	err := o.Db.QueryRow(sqlstr).Scan(&r)
 	if err != nil {
 		o.Log.Errorf("param=%+v,sql=%s,err=%v", i, sqlstr, err)
@@ -58,30 +56,27 @@ func (o object) Insert(i *Info) (r int) {
 	return
 }
 
-func (o object) Update(i *Info) (r int) {
+func (o object) Update(i *Info) (r string) {
 	now := time.Now()
-	sqlstr := fmt.Sprintf("update user_sim set updated = %d,", now.Unix())
-	if i.Uid <= 0 && i.Sid < 0 {
+	sqlstr := fmt.Sprintf("update sim_order set updated = %d,", now.Unix())
+	if len(i.No) <= 0 {
 		o.Log.Error("invalid param")
 		return
 	}
-	if i.ServiceEndTs > 0 {
-		sqlstr += fmt.Sprintf("service_end_ts = %d,", i.ServiceEndTs)
+	if i.Status > 0 {
+		sqlstr += fmt.Sprintf("status = %d,", i.Status)
 	}
-	if i.ServiceDuration > 0 {
-		sqlstr += fmt.Sprintf("service_duration = %d,", i.ServiceDuration)
+	if i.PayPrice > 0 {
+		sqlstr += fmt.Sprintf("pay_price = %d,", i.PayPrice)
 	}
-	if i.SimByte > 0 {
-		sqlstr += fmt.Sprintf("sim_byte = %d,", i.SimByte)
-	}
-	if i.SimAvailableByte > 0 {
-		sqlstr += fmt.Sprintf("sim_available_byte = %d,", i.SimAvailableByte)
+	if len(i.PayChannel) > 0 {
+		sqlstr += fmt.Sprintf("pay_channel = '%s',", i.PayChannel)
 	}
 	if len(i.Remark) > 0 {
 		sqlstr += fmt.Sprintf("remark = '%s',", i.Remark)
 	}
 	sqlstr = strings.TrimRight(sqlstr, ",")
-	sqlstr += fmt.Sprintf(" where uid = %d and sid = %d returning uid", i.Uid, i.Sid)
+	sqlstr += fmt.Sprintf("where no = '%s' returning no", i.No)
 	err := o.Db.QueryRow(sqlstr).Scan(&r)
 	if err != nil {
 		o.Log.Errorf("param=%+v,sql=%s,err=%v", i, sqlstr, err)
@@ -115,14 +110,11 @@ func (o object) QueryList(uid int) (total int, list []Info) {
 	select
 	coalesce(uid,0) as uid,
 	coalesce(sid,0) as sid,
-	coalesce(sim_provider,'') as sim_provider,
 	coalesce(sim_no,'') as sim_no,
-	coalesce(iccid,'') as iccid,
 	coalesce(sim_byte,0) as sim_byte,
 	coalesce(sim_available_byte,0) as sim_available_byte,
 	coalesce(bind_ts,0) as bind_ts,
 	coalesce(service_end_ts,0) as service_end_ts,
-	coalesce(service_duration,0) as service_duration,
 	coalesce(remark,'') as remark,
 	coalesce(created,0) as created,
 	coalesce(updated,0) as updated
@@ -139,7 +131,7 @@ func (o object) QueryList(uid int) (total int, list []Info) {
 	defer rows.Close()
 	for rows.Next() {
 		var r = Info{}
-		err = rows.Scan(&r.Uid, &r.Sid, &r.SimProvider, &r.SimNo, &r.Iccid, &r.SimByte, &r.SimAvailableByte, &r.BindTs, &r.ServiceEndTs, &r.ServiceDuration, &r.Remark, &r.Created, &r.Updated)
+		err = rows.Scan(&r.Uid, &r.Remark, &r.Created, &r.Updated)
 		if err != nil {
 			o.Log.Errorf("param=%+v,sql=%s,err=%v", uid, sqlstr, err)
 			continue
@@ -149,7 +141,7 @@ func (o object) QueryList(uid int) (total int, list []Info) {
 	return
 }
 
-func (o object) queryInfo(uid, sid int) *Info {
+func (o object) queryInfo(no string, uid, sid int) *Info {
 	r := new(Info)
 	var qstr string
 	if uid > 0 {
@@ -158,27 +150,28 @@ func (o object) queryInfo(uid, sid int) *Info {
 	if sid > 0 {
 		qstr += fmt.Sprintf(" and sid = %d ", sid)
 	}
+	if len(no) > 0 {
+		qstr += fmt.Sprintf(" and no = '%s' ", no)
+	}
 	sqlstr := `
 	select
+	coalesce(oid,0) as oid,
 	coalesce(uid,0) as uid,
 	coalesce(sid,0) as sid,
-	coalesce(sim_provider,'') as sim_provider,
-	coalesce(sim_no,'') as sim_no,
-	coalesce(iccid,'') as iccid,
-	coalesce(sim_byte,0) as sim_byte,
-	coalesce(sim_available_byte,0) as sim_available_byte,
-	coalesce(bind_ts,0) as bind_ts,
-	coalesce(service_end_ts,0) as service_end_ts,
-	coalesce(service_duration,0) as service_duration,
+	coalesce(no,'') as no,
+	coalesce(name,'') as name,
+	coalesce(typ,0) as typ,
+	coalesce(sku_id,0) as sku_id,
+	coalesce(status,0) as status,
 	coalesce(remark,'') as remark,
 	coalesce(created,0) as created,
 	coalesce(updated,0) as updated
-	from user_sim
+	from sim_order
 	where 1=1
 	`
 	sqlstr += qstr
-	// app.Log.Debug(sqlstr)
-	err := o.DbRo.QueryRow(sqlstr).Scan(&r.Uid, &r.Sid, &r.SimProvider, &r.SimNo, &r.Iccid, &r.SimByte, &r.SimAvailableByte, &r.BindTs, &r.ServiceEndTs, &r.ServiceDuration, &r.Remark, &r.Created, &r.Updated)
+	app.Log.Debug(sqlstr)
+	err := o.DbRo.QueryRow(sqlstr).Scan(&r.Oid, &r.Uid, &r.Sid, &r.No, &r.Name, &r.Typ, &r.SkuId, &r.Status, &r.Remark, &r.Created, &r.Updated)
 	if err != nil {
 		o.Log.Errorf("param=%d,sql=%s,err=%v", uid, sqlstr, err)
 		return nil
@@ -186,12 +179,8 @@ func (o object) queryInfo(uid, sid int) *Info {
 	return r
 }
 
-func (o object) QueryInfo(uid, sid int) *Info {
-	return o.queryInfo(uid, sid)
-}
-
-func (o object) QueryInfoBySid(sid int) *Info {
-	return o.queryInfo(0, sid)
+func (o object) QueryInfoByNo(no string) *Info {
+	return o.queryInfo(no, 0, 0)
 }
 
 func (o object) Delete(uid, sid int) (r int) {

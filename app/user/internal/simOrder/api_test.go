@@ -1,4 +1,4 @@
-package userSim
+package simOrder
 
 import (
 	"fmt"
@@ -42,26 +42,24 @@ func TestInsert(t *testing.T) {
 	now := time.Now()
 	entry := initInstance()
 	info := Info{
-		Uid:              1,
-		Sid:              2,
-		SimProvider:      "ChinaUnicom",
-		SimNo:            "12345678901",
-		Iccid:            "12345678902",
-		SimByte:          307200,
-		SimAvailableByte: 307200,
-		BindTs:           now.Unix(),
-		ServiceEndTs:     now.Unix() + 86400,
-		ServiceDuration:  0,
-		Remark:           "测试",
+		Uid:    1,
+		Remark: "测试",
 	}
 	r := entry.Insert(&info)
 	fmt.Printf("info=%#+v,now=%v\n", r, now)
 }
 
-func TestQueryInfo(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	entry := initInstance()
-	info := entry.QueryInfo(1, 1)
-	fmt.Printf("info=%#+v,bindTime=%s\n", info, time.Unix(info.BindTs, 0))
+	info := Info{
+		No:         "101653556823178504155",
+		Status:     PaymentSuccess,
+		PayPrice:   1,
+		PayChannel: "wechat",
+		Remark:     "测试",
+	}
+	r := entry.Update(&info)
+	fmt.Printf("r=%#+v\n", r)
 }
 
 func TestDelete(t *testing.T) {

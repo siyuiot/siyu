@@ -2,6 +2,13 @@ package sim
 
 import "time"
 
+type simProvider = string // sim卡提供商
+const (
+	ChinaMobile  simProvider = "ChinaMobile"
+	ChinaUnicom  simProvider = "ChinaUnicom"
+	ChinaTelecom simProvider = "ChinaTelecom"
+)
+
 type Info struct {
 	Id                     int
 	SimNo                  string    `json:"sim_no"`

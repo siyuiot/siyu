@@ -19,9 +19,9 @@ func (t *HttpServer) setupRouter() {
 	group.POST("/login/minapp", t.LoginMinapp)
 	group.POST("/get/info", t.Pong)
 
-	product := t.gin.Group("/product")
-	product.POST("/get/list", t.ProductList)
-	product.POST("/get/info", t.Pong)
+	productSku := t.gin.Group("/productSku")
+	productSku.POST("/get/list", t.ProductSkuList)
+	productSku.POST("/get/info", t.ProductSkuInfo)
 
 	// 用户sim卡
 	service := t.gin.Group("/userSim")
@@ -29,6 +29,10 @@ func (t *HttpServer) setupRouter() {
 	service.POST("/get/list", t.UserSimList) // 用户sim信息
 	service.POST("/get/info", t.UserSimInfo) // 用户sim信息
 
+	// sim流量订单
+	simOrder := t.gin.Group("/simOrder")
+	simOrder.POST("/payment", t.Payment)              // 支付
+	simOrder.POST("/payment/notify", t.PaymentNotify) // 支付通知
 }
 
 func (*HttpServer) Pong(c *gin.Context) {

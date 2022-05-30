@@ -10,6 +10,7 @@ import (
 var this *object
 
 type Object interface {
+	QueryInfo(id int) *Info
 	QueryInfoByIccid(id string) *Info
 }
 
@@ -37,6 +38,8 @@ func (o object) queryInfo(id int, simNo, imsi, iccid string) *Info {
 	r := new(Info)
 	var qstr string
 	switch {
+	case id > 0:
+		qstr += fmt.Sprintf(" AND id = %d", id)
 	case len(simNo) > 0:
 		qstr += fmt.Sprintf(" AND sim_no = '%s'", simNo)
 	case len(imsi) > 0:
@@ -69,4 +72,8 @@ func (o object) queryInfo(id int, simNo, imsi, iccid string) *Info {
 
 func (o object) QueryInfoByIccid(iccid string) *Info {
 	return o.queryInfo(0, "", "", iccid)
+}
+
+func (o object) QueryInfo(id int) *Info {
+	return o.queryInfo(id, "", "", "")
 }

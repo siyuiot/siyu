@@ -5,11 +5,8 @@ package product
 import (
 	"database/sql"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/siyuiot/siyu/pkg/qhttp"
 	"github.com/siyuiot/siyu/pkg/qlog"
 )
 
@@ -18,9 +15,8 @@ var this *object
 var orderDB *gorm.DB
 
 type Object interface {
-	// Update(*Info) int
-	// QueryInfoFromDb(appId string) *Info
-	QueryInfoFromDbOrRemote(appId string) *Info
+	QueryProductSkuByPid(pid int) ([]ProductSku, error)
+	QueryProductSkuBySkuId(skuId int) *ProductSku
 }
 
 type Option struct {
@@ -44,109 +40,47 @@ func Instance() *object {
 	return this
 }
 
-func (o object) update(i *Info) (r string) {
-	now := time.Now().UTC()
-	sqlstr := fmt.Sprintf("update wechat_access_token set updated = %d,", now.Unix())
-	if len(i.AppId) <= 0 {
-		o.Log.Error("invalid param")
+func (o *object) QueryProductSkuByPid(id int) (res []ProductSku, err error) {
+	if id <= 0 {
+		err = fmt.Errorf("param err")
 		return
 	}
-	if len(i.AccessToken) > 0 {
-		sqlstr += fmt.Sprintf("access_token = '%s',", i.AccessToken)
-	}
-	if i.ExpiresIn > 0 {
-		sqlstr += fmt.Sprintf("expires_in = '%d',", i.ExpiresIn)
-	}
-	if i.ExpiresAt > 0 {
-		sqlstr += fmt.Sprintf("expires_at = '%d',", i.ExpiresAt)
-	}
-	sqlstr = strings.TrimRight(sqlstr, ",")
-	sqlstr += fmt.Sprintf("where app_id = '%s' returning app_id", i.AppId)
-	err := o.Db.QueryRow(sqlstr).Scan(&r)
-	if err != nil {
-		o.Log.Errorf("param=%+v,sql=%s,err=%v", i, sqlstr, err)
-		return
-	}
+	err = o.DBORM.Table(ProductSku{}.TableName()+" AS ps").
+		Select("ps.*").
+		Joins("LEFT JOIN product AS p ON ps.product_id = p.id").
+		Where("p.id = ?", id).
+		Order("ps.price asc").
+		Scan(&res).Error
 	return
 }
 
-func (o object) queryInfo(appId string) *Info {
-	r := new(Info)
+func (o *object) QueryProductSkuBySkuId(skuId int) *ProductSku {
+	r := new(ProductSku)
 	var qstr string
-	switch {
-	case len(appId) > 0:
-		qstr += fmt.Sprintf(" and app_id = '%s'", appId)
-	default:
-		o.Log.Error("invalid param")
-		return nil
+	if skuId > 0 {
+		qstr += fmt.Sprintf(" and ps.id = %d ", skuId)
 	}
 	sqlstr := `
 	select
-	coalesce(app_id,'') as app_id,
-	coalesce(secret,'') as secret,
-	coalesce(access_token,'') as access_token,
-	coalesce(expires_in,0) as expires_in,
-	coalesce(expires_at,0) as expires_at,
-	coalesce(created,0) as created,
-	coalesce(updated,0) as updated
-	from wechat_access_token
+	coalesce(ps.id,0) as id,
+	coalesce(ps.name,'') as name,
+	coalesce(ps.price,0) as price,
+	coalesce(ps.price_origin,0) as price_origin,
+	coalesce(ps.status,0) as status,
+	coalesce(ps.img,'') as img,
+	coalesce(ps.des,'') as des,
+	coalesce(ps.created_at,'0001-01-01') as created_at,
+	coalesce(ps.updated_at,'0001-01-01') as updated_at
+	from product_sku ps
+	left join product p on ps.product_id = p.id
 	where 1=1
 	`
 	sqlstr += qstr
-	err := o.DbRo.QueryRow(sqlstr).Scan(&r.AppId, &r.Secret, &r.AccessToken, &r.ExpiresIn, &r.ExpiresAt, &r.Created, &r.Updated)
+	// app.Log.Debug(sqlstr)
+	err := o.DbRo.QueryRow(sqlstr).Scan(&r.Id, &r.Name, &r.Price, &r.PriceOrigin, &r.Status, &r.Img, &r.Des, &r.CreatedAt, &r.UpdatedAt)
 	if err != nil {
-		o.Log.Errorf("param=%s,sql=%s,err=%v", appId, sqlstr, err)
+		o.Log.Errorf("param=%d,sql=%s,err=%v", skuId, sqlstr, err)
 		return nil
 	}
 	return r
-}
-
-func (o object) queryInfoFromDb(appId string) *Info {
-	return o.queryInfo(appId)
-}
-
-func (o object) GetFromDbOrRemote(appId string) *Info {
-	now := time.Now().UTC()
-	info := o.queryInfoFromDb(appId)
-	if info == nil {
-		o.Log.Error("appId is not config")
-		return nil
-	}
-	// accessToken有值
-	// accessToken没过期
-	if len(info.AccessToken) > 0 && info.ExpiresAt > now.Unix() {
-		o.Log.Info("accessToken from db")
-		return info
-	}
-
-	// 从微信获取accessToken
-	url := fmt.Sprintf("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", info.AppId, info.Secret)
-	type WechatAccessToken struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int    `json:"expires_in"`
-	}
-	var wat WechatAccessToken
-	resp, err := qhttp.GetJSON(url, &wat)
-	if err != nil {
-		o.Log.Error(err)
-		return nil
-	}
-	if len(wat.AccessToken) <= 0 {
-		o.Log.Errorf("wechatAccessToken:%s,err:%s", wat.AccessToken, resp)
-		return nil
-	}
-
-	// 更新accessToken到DB
-	rid := o.update(&Info{
-		AppId:       appId,
-		AccessToken: wat.AccessToken,
-		ExpiresIn:   wat.ExpiresIn,
-		ExpiresAt:   now.Unix() + int64(wat.ExpiresIn),
-	})
-	if len(rid) <= 0 {
-		o.Log.Errorf("wechatAccessToken update error")
-		return nil
-	}
-	o.Log.Info("accessToken from remote")
-	return o.queryInfoFromDb(rid)
 }

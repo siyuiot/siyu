@@ -9,11 +9,13 @@ import (
 	"github.com/siyuiot/siyu/app/user/internal/httpserver"
 	"github.com/siyuiot/siyu/app/user/internal/product"
 	"github.com/siyuiot/siyu/app/user/internal/sim"
+	"github.com/siyuiot/siyu/app/user/internal/simOrder"
 	"github.com/siyuiot/siyu/app/user/internal/user"
 	"github.com/siyuiot/siyu/app/user/internal/userSim"
 	"github.com/siyuiot/siyu/app/user/internal/userSimLog"
 	"github.com/siyuiot/siyu/app/user/internal/userToken"
 	"github.com/siyuiot/siyu/app/user/internal/wechatAccessToken"
+	"github.com/siyuiot/siyu/app/user/internal/wechatPay"
 	"github.com/siyuiot/siyu/pkg/qapp"
 	"github.com/siyuiot/siyu/pkg/qgin"
 	"github.com/siyuiot/siyu/pkg/qpostgresql"
@@ -61,10 +63,12 @@ func initModules(ctx context.Context) (qapp.CleanFunc, error) {
 	user.New(user.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
 	userToken.New(userToken.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
 	wechatAccessToken.New(wechatAccessToken.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
-	product.New(product.Option{Log: app.Log, DBORM: ORDERDB})
+	product.New(product.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB, DBORM: ORDERDB})
 	sim.New(sim.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
 	userSim.New(userSim.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
 	userSimLog.New(userSimLog.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
+	simOrder.New(simOrder.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB})
+	wechatPay.New(wechatPay.Option{Log: app.Log, Db: MASTERDB, DbRo: MASTERDB, MchID: "1626436719"})
 	return func(ctx context.Context) {}, nil
 }
 

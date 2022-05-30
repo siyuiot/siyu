@@ -8,8 +8,8 @@ import (
 type ProductSku struct {
 	Id          int       `json:"id"`
 	Name        string    `json:"name"`
-	Price       int       `json:"price"`
-	PriceOrigin int       `json:"price_origin"`
+	Price       int64     `json:"price"`
+	PriceOrigin int64     `json:"price_origin"`
 	ProductId   int       `json:"product_id"`
 	Status      int       `json:"status"`
 	Img         string    `json:"img"`
@@ -46,20 +46,6 @@ func GetProductSkuInfoById(id int) (res SkuInfo, err error) {
 		return
 	}
 	res.Values = values
-	return
-}
-
-func GetProductSkuByPid(id int) (res []ProductSku, err error) {
-	if id <= 0 {
-		err = fmt.Errorf("param err")
-		return
-	}
-	err = this.DBORM.Table(ProductSku{}.TableName()+" AS ps").
-		Select("ps.*").
-		Joins("LEFT JOIN product AS p ON ps.product_id = p.id").
-		Where("p.id = ?", id).
-		Order("ps.price asc").
-		Scan(&res).Error
 	return
 }
 
