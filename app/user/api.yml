@@ -6,9 +6,10 @@ UserInfo: &ui
 Api:
   - url: "/user/login/minapp" # 小程序登录
     request:
+      code: xxxx # 换取用户手机号的code
       minapp:
         appId: wxb71c87a341a6eda7
-        code: abc123
+        code: abc123 # 前端调wx.login返回的code
         iv: abc123
         encryptedData: abc123
     response:
@@ -99,20 +100,25 @@ Api:
     #   -H 'Ts:1566489600' \
     #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
     #   -d '{"sid":1}'
-  - url: "/simOrder/submit" # sim套餐订单提交
+  - url: "/simOrder/payment" # sim套餐订单提交
     request:
+      appId: xxx
+			openId: xxx
       sid: 1 # sim卡id
       skuId: 2 # 套餐id
     response:
       state: 0 # 状态码
       stateInfo: OK # 状态描述
       data:
-        ono: "20220525115600" # 订单编号
+        prepay_id: "" # 订单编号
+        timeStamp: 111
+        nonceStr: xxx
+        package: ""
+        signType: xxx
+        paySign: xxx
     # eg:
-    #   curl http://siyu.d.blueshark.com/simOrder/submit \
+    #   curl http://siyu.d.blueshark.com/simOrder/payment \
     #   -H 'Authorization: Bearer test-xxxxxxxxxxxxxxxxxxxxx' \
     #   -H 'Ts:1566489600' \
     #   -H 'Sgagent: MP|||||com.siyu.iot|||' \
-    #   -d '{"sid":1,"skuId":2}'
-
-# 2022/05/28 16:41:13.692080Z I user qgin/log.go:62 url=/simOrder/payment/notify req={"id":"f050a6cb-ae78-515e-88b0-f81b723ecc28","create_time":"2022-05-29T00:41:13+08:00","resource_type":"encrypt-resource","event_type":"TRANSACTION.SUCCESS","summary":"支付成功","resource":{"original_type":"transaction","algorithm":"AEAD_AES_256_GCM","ciphertext":"1yTrMT98a29F4/dnnrr4sflcNXWFeJxtw9yj/yzO/VFYMm3fuNw4sKjSawUMf1AtCGgZYrWpOgf4rA8cyFMB6JEoO+yYtQ6/Fa6198MGCTudvqoAcbiwbISBzT2iAOCCNwILeCuXrXbf4eczqCRxvbmD5D6KMtqjlNz04qEs5IlHz0X5szhDihaGZm06LgXEb7J022Vza7u4XgkVEgDy7lB0a0+5w9zuhhU/ZlGKkLR2thSI8gW/y+spucsHpQbkrnuUf4ERFD/h+pT/lpXIwJh5cbEUKEq9tC/9DtZ3eLg3eWE7tXUph/9UY3B4Kz/A5X7M+Sg/0L6R5xbX0cvSALtUqxBRV/3nytoESAkUCu10XPYvgDNqZwe3ZB9yQrgfOKQalVTjcc1gbAHphODjrM/bgYUmdMYbEFTSadqiJVrYppa4GDwzeAARH5xQ82YZ84SGw76jqnJuADBVt8s4RMLCGhlLBFLHrg1YYE4j2OaBmZxEMfm+IBYJJKS5VEAWl/N9ZPxruA3XGV0jxUaj+rJBPTQhfSiyYBm0ZZodACmFoye+61rDpl1w7/UaTuu30ERTwdkJKR8sDEU+UA==","associated_data":"transaction","nonce":"iTJ6suFD5SLN"}} ip=192.168.0.249 requestId=
+    #   -d '{"appId":"","openId":"","sid":1,"skuId":2}'
