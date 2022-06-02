@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/siyuiot/siyu/app/user/internal/app"
-	"github.com/siyuiot/siyu/app/user/internal/minappCode2PhoneNum"
 	"github.com/siyuiot/siyu/app/user/internal/minappCode2Session"
 	"github.com/siyuiot/siyu/app/user/internal/minappDataDecrypt"
 	"github.com/siyuiot/siyu/app/user/internal/user"
@@ -28,7 +27,7 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 			User    *user.UserInfo `json:"user"`
 		}
 		Req struct {
-			Code   string                   `json:"code" binding:"required"`
+			Code   string                   `json:"code"` // binding:"required"
 			Minapp minappDataDecrypt.Minapp `json:"minapp"`
 		}
 		Ret struct {
@@ -59,8 +58,8 @@ func (t *HttpServer) LoginMinapp(c *gin.Context) {
 		return
 	}
 	data := Data{OpenId: ms.OpenID}
-	// phoneInfo, err := minappDataDecrypt.VerifXcxUserPnInfo(ms.SessionKey, req.Minapp.Iv, req.Minapp.EncryptedData, req.Minapp.AppId)
-	phoneInfo := minappCode2PhoneNum.POST(wat.AccessToken, req.Code)
+	phoneInfo, err := minappDataDecrypt.VerifXcxUserPnInfo(ms.SessionKey, req.Minapp.Iv, req.Minapp.EncryptedData, req.Minapp.AppId)
+	// phoneInfo := minappCode2PhoneNum.POST(wat.AccessToken, req.Code)
 	if phoneInfo == nil {
 		ret.State, ret.StateInfo = qstate.StateFailed, "phoneInfo is nil,may be invalid code"
 		return

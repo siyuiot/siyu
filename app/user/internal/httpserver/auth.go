@@ -41,14 +41,15 @@ func Auth() gin.HandlerFunc {
 		}
 		if len(headToken) < 7 {
 			err := fmt.Errorf("header token:%s err", headToken)
-			ret.State, ret.StateInfo = qstate.StateInvalidParameter, err.Error()
+			app.Log.Error(err)
+			ret.State, ret.StateInfo = qstate.StateInvalidParameter, "请登录"
 			return
 		}
 		clientToken := headToken[7:]
 		r, err := userToken.Instance().CheckAndAddTTL(clientToken)
 		if err != nil {
 			app.Log.Error(err)
-			ret.State, ret.StateInfo = qstate.StateInvalidParameter, err.Error()
+			ret.State, ret.StateInfo = qstate.StateInvalidParameter, "请登录"
 			return
 		}
 		ruid = r

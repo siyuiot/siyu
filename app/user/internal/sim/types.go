@@ -2,6 +2,8 @@ package sim
 
 import "time"
 
+const OneG = 1048576 // 1G=1048576 KB
+
 type simProvider = string // sim卡提供商
 const (
 	ChinaMobile  simProvider = "ChinaMobile"

@@ -86,6 +86,9 @@ func (t *HttpServer) UserSimBind(c *gin.Context) {
 		ret.State, ret.StateInfo = qstate.StateFailed, "绑定记录写入失败"
 		return
 	}
+	// oneMonth := 30  // 1月=30天
+	byteG := 3    // 绑定送3G
+	duration := 3 // 绑定送3天
 	// 绑定用户和sim卡
 	r := userSim.Instance().Insert(&userSim.Info{
 		Uid:              ruid,
@@ -93,10 +96,10 @@ func (t *HttpServer) UserSimBind(c *gin.Context) {
 		SimProvider:      sim.ChinaUnicom,
 		SimNo:            info.SimNo,
 		Iccid:            info.Iccid,
-		SimByte:          307200,
-		SimAvailableByte: 307200,
+		SimByte:          sim.OneG * byteG,
+		SimAvailableByte: sim.OneG * byteG,
 		BindTs:           now.Unix(),
-		ServiceEndTs:     now.Unix() + 86400*3, // 绑卡送3天体验
+		ServiceEndTs:     now.Unix() + int64(86400*duration), // 绑卡送3天体验
 		ServiceDuration:  0,
 		Remark:           fmt.Sprintf("用户:%d,卡号:%s,iccid:%s", ruid, info.SimNo, info.Iccid),
 	})
@@ -184,7 +187,7 @@ func (t *HttpServer) UserSimInfo(c *gin.Context) {
 	if info == nil {
 		err := fmt.Errorf("not found")
 		app.Log.Error(err)
-		ret.State, ret.StateInfo = qstate.StateInvalidParameter, err.Error()
+		ret.State, ret.StateInfo = qstate.StateInvalidParameter, "请绑定sim卡"
 		return
 	}
 	ret.Data = Data{

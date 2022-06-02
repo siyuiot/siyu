@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/siyuiot/siyu/app/user/internal/app"
 	"github.com/siyuiot/siyu/app/user/internal/product"
+	"github.com/siyuiot/siyu/app/user/internal/sim"
 	"github.com/siyuiot/siyu/app/user/internal/simOrder"
 	"github.com/siyuiot/siyu/app/user/internal/user"
 	"github.com/siyuiot/siyu/app/user/internal/userSim"
@@ -147,8 +148,8 @@ func paymentSuccess(orderInfo *simOrder.Info) {
 		Sid:              us.Sid,
 		ServiceEndTs:     us.ServiceEndTs + int64(orderSimDuration*30*86400),
 		ServiceDuration:  us.ServiceDuration + orderSimDuration,
-		SimByte:          us.SimByte + orderSimByte,
-		SimAvailableByte: us.SimAvailableByte + orderSimByte,
+		SimByte:          us.SimByte + orderSimByte*sim.OneG,
+		SimAvailableByte: us.SimAvailableByte + orderSimByte*sim.OneG,
 	}
 	// 添加操作记录
 	rusl := userSimLog.Instance().Insert(&userSimLog.Info{
